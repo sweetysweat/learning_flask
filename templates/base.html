@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        {% block title -%}
+            {% if title %}
+                <title>{{title}}</title>
+            {% else %}
+                <title>Nothing given</title>
+            {% endif %}
+        {% endblock %}
+    </head>
+    <body>
+        {% block content -%}
+            {% if title -%}
+                <h1>{{title}}</h1>
+            {% else -%}
+                <h1>Nothing given</h1>
+            {% endif -%}
+            {%- block mainmenu -%}
+                <ul>
+                    {% for paragraph in menu -%}
+                    <li>{{paragraph}}</li>
+                    {% endfor -%}
+                </ul>
+            {% endblock mainmenu -%}
+        {% endblock -%}
+    </body>
+</html>
