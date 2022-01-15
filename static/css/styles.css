@@ -56,5 +56,14 @@ div.content {
     font-size: 16px;
 }
 .flash {
+    margin: 10px;
     padding: 10px;
+}
+.flash.success {
+    border: 1px solid #21db56;
+    background: #aeffc5;
+}
+.flash.error {
+    border: 1px solid #ff4343;
+    background: #ff9c9c;
 }
