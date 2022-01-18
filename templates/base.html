@@ -14,9 +14,8 @@
         {% block content -%}
             {%- block mainmenu -%}
                 <ul class="mainmenu">
-                    {% for paragraph in menu -%}
-                    <li><a href="{{paragraph.url}}">{{paragraph.name}}</a></li>
-                    {% endfor -%}
+                    <li><a href="{{url_for('index')}}">Главная</a></li>
+                    <li><a href="{{url_for('add_post')}}">Добавление записи</a></li>
                 </ul>
             {% endblock mainmenu -%}
             <div class="clear"></div>

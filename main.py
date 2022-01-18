@@ -1,54 +1,80 @@
-from flask import Flask, render_template, url_for, request, flash, session, redirect, abort
+import os
+import sqlite3
+
+from flask import Flask, g, render_template, request, flash, abort
+
+from DataBase import DataBase
+
+# конфигурация
+DATABASE = ""
+DEBUG = True
+SECRET_KEY = "secret"
 
 app = Flask(__name__)
+app.config.from_object(__name__)
 
-app.config["SECRET_KEY"] = "itsasecret"
+app.config.update(dict(DATABASE=os.path.join(app.root_path, "flsite.db")))
 
-menu = [{"name": "Установка", "url": "install-flask"},
-        {"name": "Перове приложение", "url": "first-app"},
-        {"name": "Обратная связь", "url": "contact"}]
+
+def connect_db():
+    connect = sqlite3.connect(app.config["DATABASE"])
+    connect.row_factory = sqlite3.Row  # чтоб работать как со словарем
+    return connect
+
+
+def create_db():
+    """Вспомогательная функция для создания таблиц БД"""
+    db = connect_db()
+    with app.open_resource("sq_db.sql", "r") as f:
+        db.cursor().executescript(f.read())
+    db.commit()
+    db.close()
+
+
+def get_db():
+    """Соединение с БД, если оно еще не установлено"""
+    if not hasattr(g, "link_db"):
+        g.link_db = connect_db()
+    return g.link_db
+
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, "link_db"):
+        g.link_db.close()
 
 
 @app.route("/")
 def index():
-    return render_template("index.html", menu=menu)
+    db = get_db()
+    dbase = DataBase(db)
+    return render_template("index.html", menu=dbase.get_menu(), posts=dbase.get_post_anonce(), title="Про Flask")
 
 
-@app.route("/about")
-def about():
-    return render_template("about.html", title="About", menu=menu)
-
-
-@app.route("/contact", methods=["POST", "GET"])
-def contact():
+@app.route("/add_post", methods=["POST", "GET"])
+def add_post():
+    db = get_db()
+    dbase = DataBase(db)
     if request.method == "POST":
-        if len(request.form["username"]) > 2:
-            flash("Сообщение отправлено", category="success")
+        if len(request.form["name"]) > 4 and len(request.form["post"]) > 10:
+            res = dbase.add_post(request.form["name"], request.form["post"])
+            if not res:
+                flash("Ошибка добавления статьи", category="error")
+            else:
+                flash("Статья добавлена успешно", category="success")
         else:
-            flash("Ошибка", category="error")
-    return render_template("contact.html", title="Обратная связь", menu=menu)
+            flash("Ошибка добавления статьи", category="error")
+    return render_template("add_post.html", menu=dbase.get_menu(), title="Добавление статьи")
 
 
-@app.errorhandler(404)
-def page_not_found(error):
-    return render_template("page404.html", title="Страница не найдена", menu=menu), 404
-
-
-@app.route("/login", methods=["POST", "GET"])
-def login():
-    if "user_logged" in session:
-        return redirect(url_for("profile", username=session["user_logged"]))
-    elif request.method == "POST" and request.form["username"] == "111" and request.form["password"] == "111":
-        session["user_logged"] = request.form["username"]
-        return redirect(url_for("profile", username=session["user_logged"]))
-    return render_template("login.html", title="Авторизация", menu=menu)
-
-
-@app.route("/profile/<username>")
-def profile(username):
-    if "user_logged" not in session or session["user_logged"] != username:
-        abort(401)
-    return f"User: {username}"
+@app.route("/post/<int:id_post>")
+def show_post(id_post):
+    db = get_db()
+    dbase = DataBase(db)
+    title, post = dbase.get_post(id_post)
+    if not title:
+        abort(404)
+    return render_template("post.html", menu=dbase.get_menu(), title=title, post=post)
 
 
 if __name__ == "__main__":

@@ -5,16 +5,20 @@ html, body {
     height: 100%;
     width: 100%;
 }
+
 a {
     color: #0059b2;
     text-decoration: none;
 }
+
 a:hover {
     color: #cc0000;
 }
+
 .clear {
     clear: both;
 }
+
 ul.mainmenu {
     list-style: none;
     background: #3f4137;
@@ -25,45 +29,80 @@ ul.mainmenu {
     font-size: 20px;
     overflow: hidden;
 }
+
 ul.mainmenu li {
     float: left;
     margin: 18px 40px 0 50px;
 }
+
 ul.mainmenu li.last {
     float: right;
 }
+
 ul.mainmenu li a {
     color: #fdc073;
     text-decoration: none;
 }
+
 ul.mainmenu li a:hover {
     color: #fda83d;
 }
+
 div.content {
     margin: 10px;
 }
+
 .form-contact label {
     display: inline-block;
     min-width: 80 px;
 }
+
 .form-contact {
     margin: 10px;
 }
+
 .form-contact p {
     margin: 10px 0 10px 0
 }
+
 .form-contact input[type=submit], textarea{
     font-size: 16px;
 }
+
 .flash {
     margin: 10px;
     padding: 10px;
 }
+
 .flash.success {
     border: 1px solid #21db56;
     background: #aeffc5;
 }
+
 .flash.error {
     border: 1px solid #ff4343;
     background: #ff9c9c;
+}
+
+ul.list-posts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 600px;
+}
+
+ul.list-posts li{
+    margin: 20px 0 0 0;
+    border: 1px solid rgb(0, 0, 0);
+}
+
+ul.list-posts .title{
+    margin: 0;
+    padding: 5px;
+    background: rgb(204, 204, 204);
+}
+
+ul.list-posts .annonce{
+    margin: 0;
+    padding: 10px, 5px, 10px, 5px;;
 }
