@@ -11,13 +11,19 @@
         {% endblock %}
         </head>
     <body>
-        {% block content -%}
-            {%- block mainmenu -%}
+        {% block content %}
+            {%- block mainmenu %}
                 <ul class="mainmenu">
-                    <li><a href="{{url_for('index')}}">Главная</a></li>
-                    <li><a href="{{url_for('add_post')}}">Добавление записи</a></li>
+                    {% for m in menu %}
+                    <!--костыль-->
+                        {% if m.url == "/" %}
+                        <li><a href="{{m.url}}">{{m.title}}</a></li>
+                        {% else %}
+                        <li><a href="/{{m.url}}">{{m.title}}</a></li>
+                        {% endif %}
+                    {% endfor %}
                 </ul>
-            {% endblock mainmenu -%}
+            {% endblock mainmenu %}
             <div class="clear"></div>
             <div class="content">
                 {% if title -%}

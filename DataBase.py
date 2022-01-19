@@ -19,19 +19,25 @@ class DataBase:
             print("Ошибка чтения из БД")
         return []
 
-    def add_post(self, title, text):
+    def add_post(self, title, text, url):
         try:
+            self.__cursor.execute(f"SELECT COUNT() as 'count' FROM posts WHERE url LIKE '{url}'")
+            res = self.__cursor.fetchone()
+            if res["count"] != 0:
+                print("Статья с таким url уже существует")
+                return False
+
             tm = math.floor(time.time())
-            self.__cursor.execute("INSERT INTO posts VALUES (NULL, ?, ?, ?)", (title, text, tm))
+            self.__cursor.execute("INSERT INTO posts VALUES (NULL, ?, ?, ?, ?)", (title, text, url, tm))
             self.__db.commit()
         except sqlite3.Error as e:
             print("Ошибка добавления статьи в БД", str(e))
             return False
         return True
 
-    def get_post(self, post_id):
+    def get_post(self, alias):
         try:
-            self.__cursor.execute(f"SELECT title, text FROM posts WHERE id = {post_id} LIMIT 1")
+            self.__cursor.execute(f"SELECT title, text FROM posts WHERE url LIKE ? LIMIT 1", (alias,))
             res = self.__cursor.fetchone()
             if res:
                 return res
@@ -39,9 +45,9 @@ class DataBase:
             print("Ошибка получения статьи из БД", str(e))
         return False, False
 
-    def get_post_anonce(self):
+    def get_post_annonce(self):
         try:
-            self.__cursor.execute(f"SELECT id, title, text FROM posts ORDER BY time DESC")
+            self.__cursor.execute(f"SELECT id, title, text, url FROM posts ORDER BY time DESC")
             res = self.__cursor.fetchall()
             if res:
                 return res

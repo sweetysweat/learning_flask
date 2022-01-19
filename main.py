@@ -48,7 +48,7 @@ def close_db(error):
 def index():
     db = get_db()
     dbase = DataBase(db)
-    return render_template("index.html", menu=dbase.get_menu(), posts=dbase.get_post_anonce(), title="Про Flask")
+    return render_template("index.html", menu=dbase.get_menu(), posts=dbase.get_post_annonce(), title="Про Flask")
 
 
 @app.route("/add_post", methods=["POST", "GET"])
@@ -57,7 +57,7 @@ def add_post():
     dbase = DataBase(db)
     if request.method == "POST":
         if len(request.form["name"]) > 4 and len(request.form["post"]) > 10:
-            res = dbase.add_post(request.form["name"], request.form["post"])
+            res = dbase.add_post(request.form["name"], request.form["post"], request.form["url"])
             if not res:
                 flash("Ошибка добавления статьи", category="error")
             else:
@@ -67,11 +67,11 @@ def add_post():
     return render_template("add_post.html", menu=dbase.get_menu(), title="Добавление статьи")
 
 
-@app.route("/post/<int:id_post>")
-def show_post(id_post):
+@app.route("/post/<alias>")
+def show_post(alias):
     db = get_db()
     dbase = DataBase(db)
-    title, post = dbase.get_post(id_post)
+    title, post = dbase.get_post(alias)
     if not title:
         abort(404)
     return render_template("post.html", menu=dbase.get_menu(), title=title, post=post)
