@@ -1,9 +1,15 @@
 import os
 import sqlite3
 
-from flask import Flask, g, render_template, request, flash, abort
+from flask import Flask, g, render_template, request, flash, abort, redirect, url_for
+
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from DataBase import DataBase
+
+from flask_login import LoginManager, login_user, login_required
+
+from UserLogin import UserLogin
 
 # конфигурация
 DATABASE = ""
@@ -14,6 +20,24 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 app.config.update(dict(DATABASE=os.path.join(app.root_path, "flsite.db")))
+
+login_manager = LoginManager(app)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    print("load user")
+    return UserLogin().from_db(user_id, dbase)
+
+
+dbase = None
+
+
+@app.before_request
+def before_request():
+    global dbase
+    db = get_db()
+    dbase = DataBase(db)
 
 
 def connect_db():
@@ -46,15 +70,11 @@ def close_db(error):
 
 @app.route("/")
 def index():
-    db = get_db()
-    dbase = DataBase(db)
     return render_template("index.html", menu=dbase.get_menu(), posts=dbase.get_post_annonce(), title="Про Flask")
 
 
 @app.route("/add_post", methods=["POST", "GET"])
 def add_post():
-    db = get_db()
-    dbase = DataBase(db)
     if request.method == "POST":
         if len(request.form["name"]) > 4 and len(request.form["post"]) > 10:
             res = dbase.add_post(request.form["name"], request.form["post"], request.form["url"])
@@ -68,13 +88,41 @@ def add_post():
 
 
 @app.route("/post/<alias>")
+@login_required
 def show_post(alias):
-    db = get_db()
-    dbase = DataBase(db)
     title, post = dbase.get_post(alias)
     if not title:
         abort(404)
     return render_template("post.html", menu=dbase.get_menu(), title=title, post=post)
+
+
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    if request.method == "POST":
+        user = dbase.get_user_by_email(request.form["email"])
+        if user and check_password_hash(user["psw"], request.form["psw"]):
+            user_login = UserLogin().create(user)
+            login_user(user_login)
+            return redirect(url_for("index"))
+        flash("Неверный логин или пароль", "error")
+    return render_template("login.html", menu=dbase.get_menu(), title="Авторизация")
+
+
+@app.route("/register", methods=["POST", "GET"])
+def register():
+    if request.method == "POST":
+        if len(request.form["name"]) > 4 and len(request.form["email"]) > 4 and len(request.form["psw"]) > 4 and \
+                request.form["psw"] == request.form["psw2"]:
+            psw_hash = generate_password_hash(request.form["psw"])
+            res = dbase.add_user(request.form["name"], request.form["email"], psw_hash)
+            if res:
+                flash("Регистрация прошла успешно", "success")
+                return redirect(url_for("login"))
+            else:
+                flash("Ошибка добавления данных в БД", "error")
+        else:
+            flash("Неверно заполнены поля", "error")
+    return render_template("register.html", menu=dbase.get_menu(), title="Регистрация")
 
 
 if __name__ == "__main__":

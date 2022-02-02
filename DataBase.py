@@ -54,3 +54,42 @@ class DataBase:
         except sqlite3.Error as e:
             print("Ошибка получения статьи из БД", str(e))
         return []
+
+    def add_user(self, name, email, psw_hash):
+        try:
+            self.__cursor.execute(f"SELECT COUNT() as 'count' FROM users WHERE email LIKE '{email}'")
+            res = self.__cursor.fetchone()
+            if res["count"] > 0:
+                print("Пользователь с таким email уже существует")
+                return False
+            tm = math.floor(time.time())
+            self.__cursor.execute("INSERT INTO users VALUES (NULL, ?, ?, ?, ?)", (name, email, psw_hash, tm))
+            self.__db.commit()
+        except sqlite3.Error as e:
+            print("Ошибка добавления в БД", e)
+            return False
+        return True
+
+    def get_user(self, user_id):
+        try:
+            self.__cursor.execute(f"SELECT * FROM users WHERE id = {user_id} LIMIT 1")
+            res = self.__cursor.fetchone()
+            if not res:
+                print("Пользователь не найден")
+                return False
+            return res
+        except sqlite3.Error as e:
+            print("Ошибка получения данных из БД", e)
+        return False
+
+    def get_user_by_email(self, email):
+        try:
+            self.__cursor.execute(f"SELECT * FROM users WHERE email = '{email}' LIMIT 1")
+            res = self.__cursor.fetchone()
+            if not res:
+                print("Пользователь не найден")
+                return False
+            return res
+        except sqlite3.Error as e:
+            print("Ошибка получения данных из БД", e)
+        return False
