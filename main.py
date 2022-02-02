@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from DataBase import DataBase
 
-from flask_login import LoginManager, login_user, login_required
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 from UserLogin import UserLogin
 
@@ -22,6 +22,11 @@ app.config.from_object(__name__)
 app.config.update(dict(DATABASE=os.path.join(app.root_path, "flsite.db")))
 
 login_manager = LoginManager(app)
+
+login_manager.login_view = "login"
+login_manager.login_message = "Авторизуйтесь для доступа к закрытым страницам"
+login_manager.login_message_category = "success"
+
 
 
 @login_manager.user_loader
@@ -98,12 +103,15 @@ def show_post(alias):
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("profile"))
     if request.method == "POST":
         user = dbase.get_user_by_email(request.form["email"])
         if user and check_password_hash(user["psw"], request.form["psw"]):
             user_login = UserLogin().create(user)
-            login_user(user_login)
-            return redirect(url_for("index"))
+            rm = True if request.form.get("remainme") else False
+            login_user(user_login, remember=rm)
+            return redirect(request.args.get("next") or url_for("profile"))
         flash("Неверный логин или пароль", "error")
     return render_template("login.html", menu=dbase.get_menu(), title="Авторизация")
 
@@ -123,6 +131,21 @@ def register():
         else:
             flash("Неверно заполнены поля", "error")
     return render_template("register.html", menu=dbase.get_menu(), title="Регистрация")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Вы вышли с аккаунта", "success")
+    return redirect(url_for("login"))
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    return f"""<p><a href="{url_for("logout")}">Выйти из профиля</a></p>
+            <p>user info: {current_user.get_id()}</p>"""
 
 
 if __name__ == "__main__":
